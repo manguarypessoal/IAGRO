@@ -3,10 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IAGRO | Plataforma Multidimensional</title>
+    <title>IAGRO | Plataforma Multidimensional de Valuation Rural</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    animation: { 'marquee': 'marquee 25s linear infinite' },
+                    keyframes: { marquee: { '0%': { transform: 'translateX(0%)' }, '100%': { transform: 'translateX(-50%)' } } }
+                }
+            }
+        }
+    </script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
         body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
@@ -16,6 +26,16 @@
         .tab-content { display: none; }
         .tab-content.active { display: block; animation: fadeIn 0.4s ease-in-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        @media print {
+            body { background-color: white; }
+            aside, header, #ticker-bar, .no-print { display: none !important; }
+            main { padding: 0 !important; margin: 0 !important; height: auto !important; overflow: visible !important; }
+            .print-header { display: block !important; margin-bottom: 2rem; border-bottom: 2px solid #059669; padding-bottom: 1rem; }
+            .shadow-sm, .shadow-lg { box-shadow: none !important; border: 1px solid #e2e8f0 !important; }
+            #tab-dashboard { display: block !important; }
+        }
+        .print-header { display: none; }
     </style>
 </head>
 <body class="flex h-screen overflow-hidden text-slate-800">
@@ -28,16 +48,13 @@
             </div>
             <nav class="mt-6 flex flex-col gap-1 px-3">
                 <button onclick="changeTab('dashboard')" id="nav-dashboard" class="sidebar-link active flex items-center px-3 py-2.5 rounded-md text-sm text-slate-600 w-full text-left">
-                    <i class="fa-solid fa-chart-pie w-6"></i> Visão Geral
+                    <i class="fa-solid fa-chart-pie w-6 mr-2"></i> Visão Geral (Laudo)
                 </button>
                 <button onclick="changeTab('valuation')" id="nav-valuation" class="sidebar-link flex items-center px-3 py-2.5 rounded-md text-sm text-slate-600 w-full text-left">
-                    <i class="fa-solid fa-calculator w-6"></i> Motor de Valuation
+                    <i class="fa-solid fa-calculator w-6 mr-2"></i> Trindade de Valuation
                 </button>
                 <button onclick="changeTab('compliance')" id="nav-compliance" class="sidebar-link flex items-center px-3 py-2.5 rounded-md text-sm text-slate-600 w-full text-left">
-                    <i class="fa-solid fa-scale-balanced w-6"></i> Compliance Jurídico
-                </button>
-                <button class="sidebar-link flex items-center px-3 py-2.5 rounded-md text-sm text-slate-400 w-full text-left cursor-not-allowed" title="Em breve">
-                    <i class="fa-solid fa-file-contract w-6"></i> Gestão de CPRs <span class="ml-auto text-[10px] bg-slate-100 px-2 py-0.5 rounded-full border">Breve</span>
+                    <i class="fa-solid fa-scale-balanced w-6 mr-2"></i> Compliance & CPR
                 </button>
             </nav>
         </div>
@@ -48,7 +65,7 @@
                 </div>
                 <div>
                     <p class="text-sm font-semibold">Iago Manguary</p>
-                    <p class="text-xs text-slate-500">Admin</p>
+                    <p class="text-[10px] text-slate-500">Administração / Legal</p>
                 </div>
             </div>
         </div>
@@ -56,60 +73,104 @@
 
     <main class="flex-1 flex flex-col h-screen overflow-hidden">
         
-        <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-6 shadow-sm">
+        <div id="ticker-bar" class="bg-slate-900 text-slate-300 text-xs py-2 overflow-hidden flex border-b border-slate-800">
+            <div class="animate-marquee whitespace-nowrap flex items-center gap-12 px-4">
+                <div class="flex gap-12">
+                    <span><i class="fa-solid fa-seedling text-emerald-400 mr-1"></i> Soja (sc 60kg): <strong id="tk-soja" class="text-white">R$ 125,50</strong> <span class="text-emerald-400 text-[10px]">▲ 1.2%</span></span>
+                    <span><i class="fa-solid fa-wheat-awn text-amber-400 mr-1"></i> Milho (sc 60kg): <strong id="tk-milho" class="text-white">R$ 62,30</strong> <span class="text-red-400 text-[10px]">▼ 0.5%</span></span>
+                    <span><i class="fa-solid fa-cow text-slate-100 mr-1"></i> Boi Gordo (@): <strong id="tk-arroba" class="text-white">R$ 235,00</strong> <span class="text-emerald-400 text-[10px]">▲ 0.8%</span></span>
+                    <span><i class="fa-solid fa-map-location-dot text-emerald-500 mr-1"></i> Alqueire (TO/4.84ha): <strong id="tk-alq" class="text-white">R$ 72.600</strong> <span class="text-emerald-400 text-[10px]">▲ 2.1%</span></span>
+                </div>
+                <div class="flex gap-12">
+                    <span><i class="fa-solid fa-seedling text-emerald-400 mr-1"></i> Soja (sc 60kg): <strong class="text-white">R$ 125,50</strong> <span class="text-emerald-400 text-[10px]">▲ 1.2%</span></span>
+                    <span><i class="fa-solid fa-wheat-awn text-amber-400 mr-1"></i> Milho (sc 60kg): <strong class="text-white">R$ 62,30</strong> <span class="text-red-400 text-[10px]">▼ 0.5%</span></span>
+                    <span><i class="fa-solid fa-cow text-slate-100 mr-1"></i> Boi Gordo (@): <strong class="text-white">R$ 235,00</strong> <span class="text-emerald-400 text-[10px]">▲ 0.8%</span></span>
+                    <span><i class="fa-solid fa-map-location-dot text-emerald-500 mr-1"></i> Alqueire (TO/4.84ha): <strong class="text-white">R$ 72.600</strong> <span class="text-emerald-400 text-[10px]">▲ 2.1%</span></span>
+                </div>
+            </div>
+        </div>
+
+        <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-6 shadow-sm no-print">
             <div class="flex items-center">
-                <button class="md:hidden text-slate-500 mr-4"><i class="fa-solid fa-bars text-xl"></i></button>
                 <h2 class="text-lg font-semibold text-slate-700" id="page-title">Dashboard Operacional</h2>
             </div>
             <div class="flex items-center gap-4">
                 <span id="badge-status" class="bg-emerald-100 text-emerald-800 text-xs font-semibold px-3 py-1.5 rounded-full flex items-center gap-1 border border-emerald-200">
-                    <i class="fa-solid fa-check-circle"></i> Sistema Operante
+                    <i class="fa-solid fa-wifi"></i> Cotações Sincronizadas
                 </span>
-                <button class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-bell"></i></button>
             </div>
         </header>
 
         <div class="flex-1 overflow-y-auto p-6 md:p-8">
             <div class="max-w-6xl mx-auto">
 
+                <div class="print-header">
+                    <div class="flex justify-between items-end">
+                        <div>
+                            <h1 class="text-3xl font-bold text-slate-900">LAUDO DE VALUATION MULTIDIMENSIONAL</h1>
+                            <p class="text-slate-600 font-medium">IAGRO - Inteligência de Dados para Crédito Rural</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-sm text-slate-500">Emissão: <span id="print-date"></span></p>
+                            <p class="text-sm text-slate-500">Base de Cotação: B3 / CEPEA</p>
+                        </div>
+                    </div>
+                </div>
+
                 <div id="tab-dashboard" class="tab-content active">
-                    
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                        <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
-                            <p class="text-sm font-medium text-slate-500 mb-1">Valuation Total Auditado</p>
-                            <h3 id="dash-total" class="text-3xl font-bold text-slate-800">R$ 0,00</h3>
-                            <p class="text-xs text-emerald-600 mt-2 flex items-center gap-1"><i class="fa-solid fa-arrow-trend-up"></i> Atualizado em tempo real</p>
+                        <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm col-span-1 md:col-span-2 bg-slate-900 text-white relative overflow-hidden">
+                            <div class="relative z-10">
+                                <p class="text-sm font-medium text-slate-400 mb-1 uppercase tracking-wider">Patrimônio Total Auditado (Terra + Máquina + Safra)</p>
+                                <h3 id="dash-total" class="text-5xl font-bold text-white mb-2">R$ 0,00</h3>
+                                <div class="flex gap-4 mt-4">
+                                    <div class="bg-slate-800 px-3 py-1.5 rounded border border-slate-700">
+                                        <p class="text-[10px] text-slate-400 uppercase">Score Patrimonial</p>
+                                        <p id="dash-score" class="text-lg font-bold text-emerald-400">A (Alta Liquidez)</p>
+                                    </div>
+                                    <div class="bg-slate-800 px-3 py-1.5 rounded border border-slate-700">
+                                        <p class="text-[10px] text-slate-400 uppercase">Razão de Garantia CPR</p>
+                                        <p id="dash-razao" class="text-lg font-bold text-emerald-400">100%</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <i class="fa-solid fa-chart-line absolute -bottom-10 -right-10 text-9xl text-slate-800 opacity-50 z-0"></i>
                         </div>
-                        <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
-                            <p class="text-sm font-medium text-slate-500 mb-1">Score Patrimonial</p>
-                            <h3 id="dash-score" class="text-3xl font-bold text-emerald-600">A+</h3>
-                            <p class="text-xs text-slate-500 mt-2">Risco de liquidez mitigado</p>
-                        </div>
-                        <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
-                            <p class="text-sm font-medium text-slate-500 mb-1">Status de Crédito Verde</p>
-                            <h3 id="dash-esg" class="text-2xl font-bold text-emerald-600 mt-1"><i class="fa-solid fa-shield-check"></i> Elegível</h3>
-                            <p class="text-xs text-slate-500 mt-2">Validação cruzada com SICAR/IBAMA</p>
+                        
+                        <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-center border-t-4 border-t-emerald-500">
+                            <p class="text-sm font-medium text-slate-500 mb-1">Status ESG / IBAMA</p>
+                            <h3 id="dash-esg" class="text-2xl font-bold text-emerald-600 mt-1"><i class="fa-solid fa-shield-check"></i> CAR Regular</h3>
+                            <p class="text-xs text-slate-500 mt-2">Elegível para emissão de Crédito Verde.</p>
                         </div>
                     </div>
 
                     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                         <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
-                            <h3 class="text-lg font-semibold text-slate-800 mb-4">Composição de Garantias</h3>
+                            <h3 class="text-lg font-semibold text-slate-800 mb-4">Composição da Garantia (Pilares IAGRO)</h3>
                             <div class="relative h-64 w-full flex justify-center">
                                 <canvas id="valuationChart"></canvas>
                             </div>
                         </div>
+                        
                         <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex flex-col">
-                            <h3 class="text-lg font-semibold text-slate-800 mb-4">Ações Rápidas</h3>
-                            <p class="text-sm text-slate-600 mb-6">Emita laudos técnicos baseados nos parâmetros atuais de avaliação e compliance do bioma.</p>
-                            
-                            <div class="space-y-3 mt-auto">
-                                <button onclick="changeTab('valuation')" class="w-full bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-700 py-3 rounded-lg text-sm font-medium transition flex justify-between items-center px-4">
-                                    <span>Ajustar Parâmetros de Avaliação</span>
-                                    <i class="fa-solid fa-chevron-right text-slate-400"></i>
-                                </button>
-                                <button class="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-3 rounded-lg text-sm font-medium transition flex justify-center items-center gap-2 shadow-sm">
-                                    <i class="fa-solid fa-file-pdf"></i> Gerar Laudo Técnico (PDF)
+                            <h3 class="text-lg font-semibold text-slate-800 mb-4">Detalhamento Financeiro</h3>
+                            <div class="space-y-4 mb-6 flex-1">
+                                <div class="flex justify-between items-center border-b pb-2">
+                                    <span class="text-sm text-slate-600"><i class="fa-solid fa-map text-emerald-600 w-5"></i> Imobiliário <span id="lbl-alq-resumo" class="text-[10px] bg-slate-100 px-1 rounded ml-1">0 Alq</span></span>
+                                    <span id="sub-terra" class="font-bold text-slate-800">R$ 0,00</span>
+                                </div>
+                                <div class="flex justify-between items-center border-b pb-2">
+                                    <span class="text-sm text-slate-600"><i class="fa-solid fa-tractor text-blue-600 w-5"></i> Ativos Mecânicos</span>
+                                    <span id="sub-maq" class="font-bold text-slate-800">R$ 0,00</span>
+                                </div>
+                                <div class="flex justify-between items-center border-b pb-2">
+                                    <span class="text-sm text-slate-600"><i class="fa-solid fa-wheat-awn text-amber-500 w-5"></i> Garantia de Safra</span>
+                                    <span id="sub-safra" class="font-bold text-slate-800">R$ 0,00</span>
+                                </div>
+                            </div>
+                            <div class="no-print">
+                                <button onclick="window.print()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-3 rounded-lg text-sm font-medium transition flex justify-center items-center gap-2 shadow-sm">
+                                    <i class="fa-solid fa-file-pdf"></i> Imprimir Laudo Técnico PDF
                                 </button>
                             </div>
                         </div>
@@ -118,76 +179,105 @@
 
                 <div id="tab-valuation" class="tab-content">
                     <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                        <div class="p-6 border-b border-slate-200 bg-slate-50">
-                            <h2 class="text-xl font-semibold text-slate-800">Parâmetros de Precificação Base</h2>
-                            <p class="text-sm text-slate-500 mt-1">Insira os dados técnicos do imóvel e maquinário para cálculo dinâmico da região do MATOPIBA.</p>
+                        <div class="p-6 border-b border-slate-200 bg-slate-50 flex items-center justify-between">
+                            <div>
+                                <h2 class="text-xl font-semibold text-slate-800">Trindade de Valuation IAGRO</h2>
+                                <p class="text-sm text-slate-500 mt-1">Sincronizado em tempo real com os preços do mercado agropecuário.</p>
+                            </div>
+                            <span class="bg-emerald-100 text-emerald-700 px-2 py-1 rounded text-xs font-bold border border-emerald-200"><i class="fa-solid fa-link"></i> API B3/CEPEA Conectada</span>
                         </div>
                         
-                        <div class="p-6 grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        <div class="p-6 grid grid-cols-1 md:grid-cols-3 gap-8">
                             
-                            <div class="space-y-6">
+                            <div class="space-y-5 bg-slate-50 p-4 rounded-lg border border-slate-200">
+                                <h3 class="text-sm font-bold text-emerald-700 uppercase tracking-wider flex items-center gap-2 border-b border-emerald-200 pb-2">
+                                    <i class="fa-solid fa-map"></i> 1. Land Intelligence
+                                </h3>
                                 <div>
-                                    <h3 class="text-sm font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2 border-b pb-2 mb-4">
-                                        <i class="fa-solid fa-map-location-dot text-emerald-600"></i> Land Intelligence
-                                    </h3>
-                                    <div class="space-y-4">
-                                        <div>
-                                            <label class="block text-sm font-medium text-slate-700 mb-1">Localização (Bioma)</label>
-                                            <select class="w-full border border-slate-300 rounded-lg p-2.5 bg-slate-50 text-sm focus:ring-emerald-500 focus:border-emerald-500">
-                                                <option>Tocantins (Cerrado)</option>
-                                                <option>Maranhão (Cerrado/Amazônia)</option>
-                                                <option>Piauí (Cerrado)</option>
-                                                <option>Bahia (Cerrado)</option>
-                                            </select>
-                                        </div>
-                                        <div>
-                                            <div class="flex justify-between">
-                                                <label class="block text-sm font-medium text-slate-700 mb-1">Área Total (Hectares)</label>
-                                                <span id="lbl-ha" class="text-sm font-bold text-emerald-600">1000 ha</span>
-                                            </div>
-                                            <input type="range" id="inp-ha" min="10" max="10000" value="1000" class="w-full accent-emerald-600">
-                                        </div>
-                                        <div>
-                                            <div class="flex justify-between">
-                                                <label class="block text-sm font-medium text-slate-700 mb-1">Aptidão Agrícola do Solo</label>
-                                                <span id="lbl-aptidao" class="text-sm font-bold text-emerald-600">100%</span>
-                                            </div>
-                                            <input type="range" id="inp-aptidao" min="40" max="150" value="100" class="w-full accent-emerald-600">
-                                            <p class="text-[11px] text-slate-500 mt-1">Cruza dados de relevo e histórico de satélite.</p>
-                                        </div>
+                                    <div class="flex justify-between">
+                                        <label class="text-xs font-medium text-slate-700 mb-1">Medida da Terra</label>
+                                        <span id="txt-calc-terra" class="text-[10px] text-emerald-600 font-bold">1 Alqueire = 4.84 ha</span>
                                     </div>
+                                    <div class="flex gap-2">
+                                        <input type="number" id="inp-area" value="50" class="w-2/3 border border-slate-300 rounded p-2 text-sm focus:ring-emerald-500">
+                                        <select id="inp-unidade" class="w-1/3 border border-slate-300 rounded p-2 text-sm focus:ring-emerald-500 bg-white">
+                                            <option value="alqueire">Alqueires</option>
+                                            <option value="hectare">Hectares</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-medium text-slate-700 mb-1">Cotação do Alqueire na Região (R$)</label>
+                                    <div class="relative">
+                                        <input type="number" id="inp-basealq" readonly class="w-full border border-slate-300 rounded p-2 text-sm bg-emerald-50 text-emerald-800 font-bold focus:outline-none">
+                                        <i class="fa-solid fa-lock absolute right-3 top-2.5 text-emerald-600/50 text-xs"></i>
+                                    </div>
+                                    <p class="text-[9px] text-slate-500 mt-1">Valor atualizado via mercado em tempo real.</p>
+                                </div>
+                                <div>
+                                    <div class="flex justify-between">
+                                        <label class="block text-xs font-medium text-slate-700 mb-1">Aptidão / Qualidade da Terra</label>
+                                        <span id="lbl-aptidao" class="text-xs font-bold text-emerald-600">100%</span>
+                                    </div>
+                                    <input type="range" id="inp-aptidao" min="50" max="150" value="100" class="w-full accent-emerald-600">
                                 </div>
                             </div>
 
-                            <div class="space-y-6">
+                            <div class="space-y-5 bg-slate-50 p-4 rounded-lg border border-slate-200">
+                                <h3 class="text-sm font-bold text-blue-700 uppercase tracking-wider flex items-center gap-2 border-b border-blue-200 pb-2">
+                                    <i class="fa-solid fa-cow"></i> 2. Pecuária & Máquinas
+                                </h3>
                                 <div>
-                                    <h3 class="text-sm font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2 border-b pb-2 mb-4">
-                                        <i class="fa-solid fa-tractor text-blue-600"></i> Ativos Mecânicos
-                                    </h3>
-                                    <div class="space-y-4">
-                                        <div>
-                                            <label class="block text-sm font-medium text-slate-700 mb-1">Valor do Bem Novo (Nota Fiscal)</label>
-                                            <div class="relative">
-                                                <span class="absolute left-3 top-2.5 text-slate-500 text-sm">R$</span>
-                                                <input type="number" id="inp-valormaq" value="1500000" class="w-full border border-slate-300 rounded-lg p-2.5 pl-9 bg-slate-50 text-sm focus:ring-blue-500 focus:border-blue-500">
-                                            </div>
-                                        </div>
-                                        <div>
-                                            <div class="flex justify-between">
-                                                <label class="block text-sm font-medium text-slate-700 mb-1">Desgaste Acumulado (Horas)</label>
-                                                <span id="lbl-horas" class="text-sm font-bold text-blue-600">3500 h</span>
-                                            </div>
-                                            <input type="range" id="inp-horas" min="0" max="20000" value="3500" class="w-full accent-blue-600">
-                                            <p class="text-[11px] text-slate-500 mt-1">Depreciação algorítmica acelera após 10.000h.</p>
-                                        </div>
+                                    <div class="flex justify-between">
+                                        <label class="block text-xs font-medium text-slate-700 mb-1">Garantia em Arrobas (@)</label>
+                                        <span id="lbl-arrobas" class="text-xs font-bold text-blue-600">1000 @</span>
+                                    </div>
+                                    <input type="range" id="inp-qtdarroba" min="0" max="10000" value="1000" step="50" class="w-full accent-blue-600">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-medium text-slate-700 mb-1">Cotação do Boi Gordo (@) R$</label>
+                                    <div class="relative">
+                                        <input type="number" id="inp-basearroba" readonly class="w-full border border-slate-300 rounded p-2 text-sm bg-blue-50 text-blue-800 font-bold focus:outline-none">
+                                        <i class="fa-solid fa-lock absolute right-3 top-2.5 text-blue-600/50 text-xs"></i>
+                                    </div>
+                                </div>
+                                <div class="pt-2 border-t border-slate-200">
+                                    <label class="block text-xs font-medium text-slate-700 mb-1">Adicionar Maquinário (Valor Depreciado R$)</label>
+                                    <input type="number" id="inp-maqdepreciada" value="500000" class="w-full border border-slate-300 rounded p-2 text-sm focus:ring-blue-500 bg-white">
+                                </div>
+                            </div>
+
+                            <div class="space-y-5 bg-slate-50 p-4 rounded-lg border border-slate-200">
+                                <h3 class="text-sm font-bold text-amber-600 uppercase tracking-wider flex items-center gap-2 border-b border-amber-200 pb-2">
+                                    <i class="fa-solid fa-wheat-awn"></i> 3. Commodities/Safra
+                                </h3>
+                                <div>
+                                    <label class="block text-xs font-medium text-slate-700 mb-1">Commodity Projetada na CPR</label>
+                                    <select id="inp-commodity" class="w-full border border-slate-300 rounded p-2 text-sm focus:ring-amber-500 bg-white">
+                                        <option value="soja">Soja (Sacadas)</option>
+                                        <option value="milho">Milho (Sacadas)</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <div class="flex justify-between">
+                                        <label class="block text-xs font-medium text-slate-700 mb-1">Volume Previsto (Sacas)</label>
+                                        <span id="lbl-sacas" class="text-xs font-bold text-amber-600">5000 sc</span>
+                                    </div>
+                                    <input type="range" id="inp-sacas" min="0" max="50000" value="5000" step="100" class="w-full accent-amber-600">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-medium text-slate-700 mb-1">Preço Mercado (Saca 60kg) R$</label>
+                                    <div class="relative">
+                                        <input type="number" id="inp-basesaca" readonly class="w-full border border-slate-300 rounded p-2 text-sm bg-amber-50 text-amber-800 font-bold focus:outline-none">
+                                        <i class="fa-solid fa-lock absolute right-3 top-2.5 text-amber-600/50 text-xs"></i>
                                     </div>
                                 </div>
                             </div>
 
                         </div>
-                        <div class="bg-slate-50 p-6 border-t border-slate-200 flex justify-end">
-                            <button onclick="changeTab('dashboard')" class="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-2.5 rounded-lg text-sm font-medium transition shadow-sm">
-                                Atualizar Valuation
+                        <div class="bg-slate-100 p-4 border-t border-slate-200 flex justify-end">
+                            <button onclick="changeTab('dashboard')" class="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-2 rounded text-sm font-medium transition shadow-sm">
+                                <i class="fa-solid fa-rotate mr-2"></i> Recalcular Laudo
                             </button>
                         </div>
                     </div>
@@ -195,40 +285,30 @@
 
                 <div id="tab-compliance" class="tab-content">
                     <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
-                        <h2 class="text-xl font-semibold text-slate-800 mb-6">Validação de Garantias e Embargos</h2>
+                        <h2 class="text-xl font-semibold text-slate-800 mb-2">Conformidade e CPRs (Lei do Agro)</h2>
+                        <p class="text-sm text-slate-500 mb-6">Auditoria de risco legal e proporção de cobertura da Cédula de Produto Rural.</p>
                         
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                            <div>
-                                <label class="block text-sm font-medium text-slate-700 mb-2">Número do CAR (Cadastro Ambiental Rural)</label>
-                                <div class="flex gap-2 mb-4">
-                                    <input type="text" placeholder="TO-1721000-E45A..." class="flex-1 border border-slate-300 rounded-lg p-2.5 bg-slate-50 text-sm focus:ring-emerald-500">
-                                    <button class="bg-slate-800 text-white px-4 rounded-lg text-sm font-medium hover:bg-slate-700">Validar</button>
+                            <div class="border border-slate-200 rounded-lg p-5">
+                                <h3 class="font-bold text-slate-700 mb-4 border-b pb-2"><i class="fa-solid fa-gavel text-slate-400"></i> Auditoria de Matrícula e CAR</h3>
+                                <div class="flex items-center justify-between p-3 border border-slate-200 rounded bg-slate-50 mb-3">
+                                    <span class="text-sm font-medium text-slate-700">Consulta SICAR / IBAMA</span>
+                                    <label class="relative inline-flex items-center cursor-pointer">
+                                        <input type="checkbox" id="chk-embargo" class="sr-only peer">
+                                        <div class="w-9 h-5 bg-emerald-500 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-red-500"></div>
+                                    </label>
                                 </div>
-                                
-                                <div class="space-y-3 mt-6">
-                                    <div class="flex items-center justify-between p-3 border border-emerald-200 bg-emerald-50 rounded-lg">
-                                        <div class="flex items-center gap-3">
-                                            <i class="fa-solid fa-file-signature text-emerald-600"></i>
-                                            <span class="text-sm font-medium text-emerald-900">Sobreposição de Áreas</span>
-                                        </div>
-                                        <span class="text-xs font-bold text-emerald-700 bg-emerald-200 px-2 py-1 rounded">0% Detectado</span>
-                                    </div>
-                                    <div class="flex items-center justify-between p-3 border border-slate-200 rounded-lg">
-                                        <div class="flex items-center gap-3">
-                                            <label class="relative inline-flex items-center cursor-pointer">
-                                                <input type="checkbox" id="chk-embargo" class="sr-only peer">
-                                                <div class="w-9 h-5 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-red-500"></div>
-                                            </label>
-                                            <span class="text-sm font-medium text-slate-700">Simular Embargo Ambiental (IBAMA)</span>
-                                        </div>
-                                    </div>
-                                </div>
+                                <p class="text-[11px] text-slate-500">Desative para simular uma área com Embargo Ambiental.</p>
                             </div>
                             
-                            <div class="bg-slate-50 p-6 rounded-lg border border-slate-200 flex flex-col justify-center items-center text-center">
-                                <i class="fa-solid fa-scale-balanced text-4xl text-slate-300 mb-3"></i>
-                                <h3 class="text-lg font-semibold text-slate-800">Conformidade Legal</h3>
-                                <p class="text-sm text-slate-500 mt-2 mb-4">A avaliação jurídica é fundamental para o registro de Cédulas de Produto Rural (CPRs) e alienação fiduciária.</p>
+                            <div class="border border-slate-200 rounded-lg p-5 bg-emerald-50">
+                                <h3 class="font-bold text-emerald-800 mb-4 border-b border-emerald-200 pb-2"><i class="fa-solid fa-file-invoice-dollar"></i> Emissão de CPR</h3>
+                                <label class="block text-sm font-medium text-slate-700 mb-1">Valor do Crédito Solicitado (R$)</label>
+                                <input type="number" id="inp-cpr" value="2500000" class="w-full border border-emerald-300 rounded p-2.5 text-sm focus:ring-emerald-500 bg-white mb-4">
+                                <div class="bg-white p-3 rounded border border-emerald-200">
+                                    <p class="text-xs text-slate-500 uppercase">Status da Operação</p>
+                                    <p id="cpr-status" class="font-bold text-emerald-700 text-lg">Garantia Adequada</p>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -239,121 +319,163 @@
     </main>
 
     <script>
-        // Lógica Global e Estado
-        let myChart = null;
+        // --- 1. SIMULAÇÃO DE API DE MERCADO EM TEMPO REAL ---
+        // Na versão final em Python, isso virá do banco de dados (WebScraping Cepea/B3)
+        const COTACOES_HOJE = {
+            soja: 125.50,
+            milho: 62.30,
+            arroba: 235.00,
+            alqueireTO: 72600 // Preço base médio do Alqueire (4.84 ha) no Tocantins
+        };
 
+        // --- 2. INICIALIZAÇÃO DA PÁGINA ---
+        const dt = new Date();
+        document.getElementById('print-date').innerText = dt.toLocaleDateString('pt-BR') + ' ' + dt.toLocaleTimeString('pt-BR');
+
+        // Carrega os valores travados (ReadOnly) na interface
+        document.getElementById('inp-basealq').value = COTACOES_HOJE.alqueireTO;
+        document.getElementById('inp-basearroba').value = COTACOES_HOJE.arroba;
+        
+        function atualizarPrecoCommodity() {
+            const tipo = document.getElementById('inp-commodity').value;
+            document.getElementById('inp-basesaca').value = COTACOES_HOJE[tipo];
+            updateEngine(); // Recalcula se o tipo mudar
+        }
+        document.getElementById('inp-commodity').addEventListener('change', atualizarPrecoCommodity);
+        atualizarPrecoCommodity(); // Call on load
+
+        let myChart = null;
         const formatCurrency = (val) => val.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
-        // Navegação por Abas
+        // --- 3. NAVEGAÇÃO DE ABAS ---
         function changeTab(tabId) {
             document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
             document.querySelectorAll('.sidebar-link').forEach(el => el.classList.remove('active'));
-            
             document.getElementById('tab-' + tabId).classList.add('active');
             document.getElementById('nav-' + tabId).classList.add('active');
-
-            const titles = {
-                'dashboard': 'Visão Geral Executiva',
-                'valuation': 'Motor de Valuation',
-                'compliance': 'Auditoria de Compliance'
-            };
+            const titles = { 'dashboard': 'Dashboard Operacional', 'valuation': 'Motor de Valuation Sincronizado', 'compliance': 'Compliance & CPR' };
             document.getElementById('page-title').innerText = titles[tabId];
-
-            if (tabId === 'dashboard') {
-                updateEngine();
-            }
+            if (tabId === 'dashboard') updateEngine();
         }
 
-        // Lógica Matemática do IAGRO
+        // --- 4. MOTOR DE CÁLCULO CORE ---
         function updateEngine() {
-            // Entradas
-            const hectares = parseFloat(document.getElementById('inp-ha').value);
+            // Inputs Land (Cálculo de Hectares vs Alqueires)
+            const inputArea = parseFloat(document.getElementById('inp-area').value);
+            const unidade = document.getElementById('inp-unidade').value;
+            let qtdAlqueires = unidade === 'alqueire' ? inputArea : (inputArea / 4.84);
+            
+            const precoAlqueire = parseFloat(document.getElementById('inp-basealq').value);
             const aptidao = parseFloat(document.getElementById('inp-aptidao').value) / 100;
-            const valorNovoMaq = parseFloat(document.getElementById('inp-valormaq').value) || 0;
-            const horasUso = parseFloat(document.getElementById('inp-horas').value);
+            
+            // Inputs Máquinas e Pecuária (Arroba)
+            const qtdArroba = parseFloat(document.getElementById('inp-qtdarroba').value);
+            const precoArroba = parseFloat(document.getElementById('inp-basearroba').value);
+            const maqDepreciada = parseFloat(document.getElementById('inp-maqdepreciada').value) || 0;
+
+            // Inputs Safra
+            const qtdSacas = parseFloat(document.getElementById('inp-sacas').value);
+            const precoSaca = parseFloat(document.getElementById('inp-basesaca').value);
+
+            // Inputs Compliance
             const isEmbargado = document.getElementById('chk-embargo').checked;
+            const valorCpr = parseFloat(document.getElementById('inp-cpr').value) || 1; 
 
-            // Labels
-            document.getElementById('lbl-ha').innerText = hectares + " ha";
+            // --- Atualiza Labels Dinâmicos ---
             document.getElementById('lbl-aptidao').innerText = (aptidao * 100).toFixed(0) + "%";
-            document.getElementById('lbl-horas').innerText = horasUso + " h";
+            document.getElementById('lbl-arrobas').innerText = qtdArroba + " @";
+            document.getElementById('lbl-sacas').innerText = qtdSacas + " sc";
+            document.getElementById('lbl-alq-resumo').innerText = qtdAlqueires.toFixed(1) + " Alqueires";
 
-            // Cálculos
-            const valorBaseTerra = 15000; // Base TO
-            const valTerra = hectares * valorBaseTerra * aptidao;
-            
-            let fatorDep = 1 - (horasUso / 20000); // Exemplo de depreciação linear simples
-            if(fatorDep < 0.1) fatorDep = 0.1; // Valor de sucata/residual de 10%
-            const valMaquina = valorNovoMaq * fatorDep;
+            // --- Lógica Financeira ---
+            const valTerra = qtdAlqueires * precoAlqueire * aptidao;
+            const valPecuariaMaq = (qtdArroba * precoArroba) + maqDepreciada;
+            const valSafra = qtdSacas * precoSaca;
+            const valTotal = valTerra + valPecuariaMaq + valSafra;
 
-            const valTotal = valTerra + valMaquina;
+            // --- Atualiza Interface Gráfica ---
+            document.getElementById('sub-terra').innerText = formatCurrency(valTerra);
+            document.getElementById('sub-maq').innerText = formatCurrency(valPecuariaMaq);
+            document.getElementById('sub-safra').innerText = formatCurrency(valSafra);
 
-            // Atualiza Dashboard
-            document.getElementById('dash-total').innerText = isEmbargado ? "R$ 0,00 (BLOQUEADO)" : formatCurrency(valTotal);
-            
-            const scoreEl = document.getElementById('dash-score');
-            const esgEl = document.getElementById('dash-esg');
+            const dashTotal = document.getElementById('dash-total');
+            const dashScore = document.getElementById('dash-score');
+            const dashEsg = document.getElementById('dash-esg');
+            const dashRazao = document.getElementById('dash-razao');
+            const cprStatus = document.getElementById('cpr-status');
 
             if (isEmbargado) {
-                scoreEl.innerText = "D (Risco Legal)";
-                scoreEl.className = "text-3xl font-bold text-red-600";
-                esgEl.innerHTML = "<i class='fa-solid fa-ban'></i> Embargado";
-                esgEl.className = "text-2xl font-bold text-red-600 mt-1";
-                document.getElementById('dash-total').classList.replace('text-slate-800', 'text-red-600');
+                // Risco Ambiental Detectado
+                dashTotal.innerText = "BLOQUEADO (Compliance)";
+                dashTotal.classList.replace('text-white', 'text-red-400');
+                dashScore.innerText = "D (Risco Legal Severo)";
+                dashScore.className = "text-lg font-bold text-red-500";
+                dashEsg.innerHTML = "<i class='fa-solid fa-ban'></i> Embargo IBAMA";
+                dashEsg.parentElement.classList.replace('border-t-emerald-500', 'border-t-red-500');
+                dashEsg.className = "text-2xl font-bold text-red-600 mt-1";
+                dashRazao.innerText = "0%";
+                dashRazao.className = "text-lg font-bold text-red-500";
+                cprStatus.innerText = "Operação Vetada (ESG)";
+                cprStatus.className = "font-bold text-red-600 text-lg";
+                renderChart(0, 0, 0); 
             } else {
-                document.getElementById('dash-total').classList.replace('text-red-600', 'text-slate-800');
-                esgEl.innerHTML = "<i class='fa-solid fa-shield-check'></i> Elegível";
-                esgEl.className = "text-2xl font-bold text-emerald-600 mt-1";
-                
-                if(valTotal > 10000000) {
-                    scoreEl.innerText = "A+";
-                    scoreEl.className = "text-3xl font-bold text-emerald-600";
-                } else if(valTotal > 3000000) {
-                    scoreEl.innerText = "A";
-                    scoreEl.className = "text-3xl font-bold text-emerald-500";
-                } else {
-                    scoreEl.innerText = "B";
-                    scoreEl.className = "text-3xl font-bold text-blue-500";
-                }
-            }
+                // Área Limpa e Aprovada
+                dashTotal.innerText = formatCurrency(valTotal);
+                dashTotal.classList.replace('text-red-400', 'text-white');
+                dashScore.innerText = "A (Score Patrimonial)";
+                dashScore.className = "text-lg font-bold text-emerald-400";
+                dashEsg.innerHTML = "<i class='fa-solid fa-shield-check'></i> CAR Regular";
+                dashEsg.parentElement.classList.replace('border-t-red-500', 'border-t-emerald-500');
+                dashEsg.className = "text-2xl font-bold text-emerald-600 mt-1";
 
-            renderChart(isEmbargado ? 0 : valTerra, isEmbargado ? 0 : valMaquina);
+                // Razão de Garantia CPR
+                const razao = (valTotal / valorCpr) * 100;
+                dashRazao.innerText = razao.toFixed(0) + "%";
+                
+                if(razao >= 150) {
+                    dashRazao.className = "text-lg font-bold text-emerald-400";
+                    cprStatus.innerText = "Garantia Excelente (>" + razao.toFixed(0) + "%)";
+                    cprStatus.className = "font-bold text-emerald-600 text-lg";
+                } else if (razao >= 120) {
+                    dashRazao.className = "text-lg font-bold text-blue-400";
+                    cprStatus.innerText = "Garantia Adequada (" + razao.toFixed(0) + "%)";
+                    cprStatus.className = "font-bold text-blue-600 text-lg";
+                } else {
+                    dashRazao.className = "text-lg font-bold text-amber-500";
+                    cprStatus.innerText = "Alerta de Descobertura (<120%)";
+                    cprStatus.className = "font-bold text-amber-600 text-lg";
+                }
+                renderChart(valTerra, valPecuariaMaq, valSafra);
+            }
         }
 
-        // Gráfico (Chart.js)
-        function renderChart(terra, maquina) {
+        // --- 5. GRÁFICO ---
+        function renderChart(terra, maqPecuaria, safra) {
             const ctx = document.getElementById('valuationChart').getContext('2d');
-            
             if(myChart) { myChart.destroy(); }
-
             myChart = new Chart(ctx, {
                 type: 'doughnut',
                 data: {
-                    labels: ['Land Intelligence (Terra)', 'Ativos Mecânicos'],
+                    labels: ['Imobiliário (Alqueires)', 'Pecuária/Máquinas', 'Commodities'],
                     datasets: [{
-                        data: [terra, maquina],
-                        backgroundColor: ['#059669', '#3b82f6'],
+                        data: [terra, maqPecuaria, safra],
+                        backgroundColor: ['#059669', '#3b82f6', '#f59e0b'],
                         borderWidth: 0,
                         hoverOffset: 4
                     }]
                 },
                 options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { position: 'bottom', labels: { boxWidth: 12, font: { family: 'Inter' } } }
-                    },
-                    cutout: '70%'
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, font: { family: 'Inter' } } } },
+                    cutout: '65%'
                 }
             });
         }
 
-        // Listeners
-        document.querySelectorAll('input').forEach(input => {
-            input.addEventListener('input', updateEngine);
-        });
-
-        // Init
+        // Listeners de Evento
+        document.querySelectorAll('input, select').forEach(input => { input.addEventListener('input', updateEngine); });
+        
+        // Disparo inicial
         updateEngine();
     </script>
 </body>
